@@ -1,8 +1,8 @@
 #include <iostream>
 #include <ql/quantlib.hpp>
-#include <replicationerror.h>
-#include <replicationpathpricer.h>
-#include <marketdata.h>
+#include <replicationerror.hpp>
+#include <replicationpathpricer.hpp>
+#include <marketdata.hpp>
 
 using namespace QuantLib;
 
