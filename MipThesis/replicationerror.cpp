@@ -2,7 +2,7 @@
 #include <ql/quantlib.hpp>
 #include <replicationerror.hpp>
 #include <replicationpathpricer.hpp>
-#include <marketdata.h>
+#include <marketdata.hpp>
 
 using namespace QuantLib;
 
