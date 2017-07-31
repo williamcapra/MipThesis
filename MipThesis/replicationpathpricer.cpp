@@ -9,7 +9,8 @@ ReplicationPathPricer::ReplicationPathPricer(Option::Type type,
 											 Real strike,
 											 boost::shared_ptr<YieldTermStructure> OISTermStructure,
 											 Time maturity,
-											 boost::shared_ptr<BlackVarianceSurface> varTS)
+											 Volatility varTS)
+											 //boost::shared_ptr<BlackVarianceSurface> varTS)
 	: type_(type), strike_(strike), OISTermStructure_(OISTermStructure), maturity_(maturity), sigma_(varTS) {
 	QL_REQUIRE(strike_ > 0.0, "strike must be positive");
 	QL_REQUIRE(maturity_ > 0.0, "maturity must be positive");
@@ -48,21 +49,11 @@ Real ReplicationPathPricer::operator()(const Path& path) const {
 
 	DiscountFactor rDiscount = OISTermStructure_->discount(maturity_);
 	DiscountFactor qDiscount = 1.00;
-	Real forward = stock*qDiscount / rDiscount;
-	Real stdDev = std::sqrt(sigma_->blackVariance(maturity_, strike_));
+	Real forward = stock*qDiscount/rDiscount;
+	Real stdDev = std::sqrt(sigma_*sigma_*maturity_);
+	//Real stdDev = std::sqrt(sigma_->blackVariance(maturity_, strike_));
 	boost::shared_ptr<StrikedTypePayoff> payoff(new PlainVanillaPayoff(type_, strike_));
 	BlackCalculator black(payoff, forward, stdDev, rDiscount);
-
-	//result-check
-	//std::cout << "Option value: " << black.value() << std::endl
-		//<< "T: " << maturity_ << std::endl
-		//<< "Underlying value: " << stock << std::endl
-		//<< "Strike: " << strike_ << std::endl
-		//<< "Volatility: " << std::sqrt(sigma_->blackVariance(maturity_, strike_) / maturity_) << std::endl
-		//<< "Volatility_blackVol " << sigma_->blackVol(maturity_, strike_, true) << std::endl
-		//<< "Risk-Free Rate: " << OISTermStructure_->zeroRate(maturity_, Compounding::Continuous) << std::endl
-		//<< "Discount Factor: " << OISTermStructure_->discount(maturity_) << std::endl
-		//<< "Forward: " << forward << std::endl;
 	
 	// sell the option, cash in its premium
 	money_account += black.value();
@@ -81,8 +72,7 @@ Real ReplicationPathPricer::operator()(const Path& path) const {
 		t += dt;
 
 		// accruing on the money account
-		rDiscount = (OISTermStructure_->discount(maturity_)) / (OISTermStructure_->discount(t));
-		money_account *= (1 / rDiscount);
+		money_account *= (1.00 /((OISTermStructure_->discount(t)) / (OISTermStructure_->discount(t - dt))));
 
 		// stock growth:
 		stock = path[step + 1];
@@ -90,8 +80,11 @@ Real ReplicationPathPricer::operator()(const Path& path) const {
 		// recalculate option value at the current stock value,
 		// and the current time to maturity
 
+		rDiscount = (OISTermStructure_->discount(maturity_)) / (OISTermStructure_->discount(t));
 		forward = stock*qDiscount / rDiscount;
-		BlackCalculator black(payoff, forward, std::sqrt(sigma_->blackForwardVariance(t, maturity_, strike_)), rDiscount);
+		stdDev = std::sqrt(sigma_*sigma_*(maturity_ - t));
+		//BlackCalculator black(payoff, forward, std::sqrt(sigma_->blackForwardVariance(t, maturity_, strike_)), rDiscount);
+		BlackCalculator black(payoff, forward, stdDev, rDiscount);
 
 		// recalculate delta
 		delta = black.delta(stock);
@@ -105,8 +98,7 @@ Real ReplicationPathPricer::operator()(const Path& path) const {
 	/*** option expiration ***/
 	/*************************/
 	// last accrual on my money account
-	money_account *= (1 / rDiscount);
-	//money_account *= std::exp(r_*dt);
+	money_account *= (1.00 / ((OISTermStructure_->discount(t)) / (OISTermStructure_->discount(t - dt))));
 
 	// last stock growth
 	stock = path[n];

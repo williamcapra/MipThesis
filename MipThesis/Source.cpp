@@ -33,15 +33,16 @@ int main(int, char*[]) {
 
 		//option input-data		
 		Date optionExpiryDate(03, June, 2020);
+		//Date optionExpiryDate(02, May, 2017);
 		Time maturity = dayCount.yearFraction(settlementDate, optionExpiryDate);
 		Real strike = 18.81;
-
+		//boost::shared_ptr<Quote> underlying(new SimpleQuote(18.81));
 		boost::shared_ptr<Quote> underlying(new SimpleQuote(15.35));
 
 		//discounting curve and volatility term structure
 		auto OISTermStructure = MarketData::builddiscountingcurve(settlementDate, fixingDays);
-		auto varTS = MarketData::buildblackvariancesurface(settlementDate, calendar);
-		auto bondTermStructure = MarketData::buildbonddiscountingcurve(settlementDate, fixingDays);
+		//auto varTS = MarketData::buildblackvariancesurface(settlementDate, calendar);
+		Volatility varTS = 0.2331;
 
 		//declaration of the ReplicatonError class
 		ReplicationError rp(Option::Call, maturity, strike, underlying, varTS, OISTermStructure);
@@ -50,11 +51,27 @@ int main(int, char*[]) {
 		Size scenarios = 50000;
 		Size hedgesNum;
 
-		hedgesNum = 1;
-		rp.compute(hedgesNum, scenarios);
-
+	
+		//hedging ones a year
 		hedgesNum = 3;
 		rp.compute(hedgesNum, scenarios);
+
+		//hedging ones a month
+		hedgesNum = 38;
+		rp.compute(hedgesNum, scenarios);
+
+		//hedging ones a week
+		hedgesNum = 166;
+		rp.compute(hedgesNum, scenarios);
+
+		//hedging ones a day
+		hedgesNum = 827;
+		rp.compute(hedgesNum, scenarios);
+
+		//hedging twice a day
+		hedgesNum = 1654;
+		rp.compute(hedgesNum, scenarios);
+
 
 		double seconds = timer.elapsed();
 		Integer hours = int(seconds / 3600);

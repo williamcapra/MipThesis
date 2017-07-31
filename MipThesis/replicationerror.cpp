@@ -10,7 +10,8 @@ ReplicationError::ReplicationError(Option::Type type,
 								   Time maturity,
 								   Real strike,
 								   boost::shared_ptr<Quote> s0,
-								   boost::shared_ptr<BlackVarianceSurface> varTS,
+								   //boost::shared_ptr<BlackVarianceSurface> varTS,
+								   Volatility varTS,
 								   boost::shared_ptr<YieldTermStructure> OISTermStructure)
 	: maturity_(maturity), payoff_(type, strike), strike_(strike), s0_(s0), sigma_(varTS), OISTermStructure_(OISTermStructure) {
 
@@ -18,20 +19,11 @@ ReplicationError::ReplicationError(Option::Type type,
 	DiscountFactor rDiscount = OISTermStructure_->discount(maturity_);
 	DiscountFactor qDiscount = 1.0;
 	Real forward = (s0_->value())*qDiscount / rDiscount;
-	Real stdDev = std::sqrt(sigma_->blackVariance(maturity_, strike_));
+	//Real stdDev = std::sqrt(sigma_->blackVariance(maturity_, strike_));
+	Real stdDev = std::sqrt(sigma_*sigma_*maturity_);
 	boost::shared_ptr<StrikedTypePayoff> payoff(new PlainVanillaPayoff(payoff_));
 	BlackCalculator black(payoff, forward, stdDev, rDiscount);
-
-	//result-check
-	//std::cout << "Option value: " << black.value() << std::endl
-		//<< "T: " << maturity_ << std::endl
-		//<< "Underlying value: " << s0_->value() << std::endl
-		//<< "Strike: " << strike << std::endl
-		//<< "Volatility: " << std::sqrt(sigma_->blackVariance(maturity_, strike_) / maturity_) << std::endl
-		//<< "Volatility_blackVol " << sigma_->blackVol(maturity_, strike_, true) << std::endl
-		//<< "Risk-Free Rate: " << OISTermStructure_->zeroRate(maturity_, Compounding::Continuous) << std::endl
-		//<< "Discount Factor: " << OISTermStructure_->discount(maturity_) << std::endl
-		//<< "Forward: " << forward << std::endl;
+	std::cout << "Option value: " << black.value() << std::endl;
 
 	// store option's vega, since Derman and Kamal's formula needs it
 	vega_ = black.vega(maturity_);
@@ -69,10 +61,18 @@ void ReplicationError::compute(Size nTimeSteps, Size nSamples)
 
 	Calendar calendar = TARGET();
 	DayCounter dayCount = Actual365Fixed();
+	Date settlementDate(04, April, 2017);
 
-	boost::shared_ptr<StochasticProcess1D> diffusion(new BlackScholesNoLocalVolProcess(Handle<Quote>(s0_),
-		Handle<YieldTermStructure>(OISTermStructure_),
-		Handle<BlackVolTermStructure>(sigma_)));
+	Handle<BlackVolTermStructure> volatility(
+		boost::shared_ptr<BlackVolTermStructure>(new BlackConstantVol(settlementDate, calendar, sigma_, dayCount)));
+
+	Handle<YieldTermStructure> dividendYield(
+		boost::shared_ptr<YieldTermStructure>(new FlatForward(settlementDate, 0.00, dayCount)));
+			
+	boost::shared_ptr<StochasticProcess1D> diffusion(new BlackScholesMertonProcess(Handle<Quote>(s0_), 
+		dividendYield, Handle<YieldTermStructure>(OISTermStructure_),
+		//Handle<BlackVolTermStructure>(sigma_)));
+		volatility));
 
 	// Black Scholes equation rules the path generator:
 	// at each step the log of the stock
@@ -92,10 +92,11 @@ void ReplicationError::compute(Size nTimeSteps, Size nSamples)
 	// of the stock. The path pricer knows how to price a path using its
 	// value() method
 
-	auto pricersigma = MarketData::buildblackvariancesurface(Date(4, Apr, 2017), TARGET());  // Please fix me
+	//auto pricersigma = MarketData::buildblackvariancesurface(settlementDate, TARGET());  // Please fix me
 
 	boost::shared_ptr<PathPricer<Path>> myPathPricer(
-		new ReplicationPathPricer(payoff_.optionType(), strike_, OISTermStructure_, maturity_, pricersigma));
+		new ReplicationPathPricer(payoff_.optionType(), strike_, OISTermStructure_, maturity_, //pricersigma));
+			sigma_));
 
 	// a statistics accumulator for the path-dependant Profit&Loss values
 	Statistics statisticsAccumulator;
@@ -120,7 +121,8 @@ void ReplicationError::compute(Size nTimeSteps, Size nSamples)
 	Real PLKurt = MCSimulation.sampleAccumulator().kurtosis();
 
 	// Derman and Kamal's formula
-	Real theorStD = std::sqrt(M_PI / 4 / nTimeSteps)*vega_*std::sqrt(pricersigma->blackVariance(maturity_, strike_) / maturity_);
+	//Real theorStD = std::sqrt(M_PI / 4 / nTimeSteps)*vega_*std::sqrt(pricersigma->blackVariance(maturity_, strike_) / maturity_);
+	Real theorStD = std::sqrt(M_PI / 4 / nTimeSteps)*vega_*sigma_;
 
 	std::cout << std::fixed
 		<< std::setw(8) << nSamples << " | "

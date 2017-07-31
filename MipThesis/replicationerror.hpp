@@ -18,7 +18,8 @@ class ReplicationError {
 			Time maturity,
 			Real strike,
 			boost::shared_ptr<Quote> s0,
-			boost::shared_ptr<BlackVarianceSurface> varTS,
+			//boost::shared_ptr<BlackVarianceSurface> varTS,
+			Volatility varTS,
 			boost::shared_ptr<YieldTermStructure> OISTermStructure);
 
 		// the actual replication error computation
@@ -29,7 +30,8 @@ class ReplicationError {
 		PlainVanillaPayoff payoff_;
 		Real strike_;
 		boost::shared_ptr<Quote> s0_;
-		boost::shared_ptr<BlackVarianceSurface> sigma_;
+		//boost::shared_ptr<BlackVarianceSurface> sigma_;
+		Volatility sigma_;
 		boost::shared_ptr<YieldTermStructure> OISTermStructure_;
 		Real vega_;
 };

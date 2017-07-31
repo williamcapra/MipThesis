@@ -17,7 +17,8 @@ class ReplicationPathPricer : public PathPricer<Path> {
 			Real strike,
 			boost::shared_ptr<YieldTermStructure> OISTermStructure,
 			Time maturity,
-			boost::shared_ptr<BlackVarianceSurface> varTS);
+			Volatility varTS);
+			//boost::shared_ptr<BlackVarianceSurface> varTS);
 
 		// The value() method encapsulates the pricing code
 		Real operator()(const Path& path) const;
@@ -27,7 +28,8 @@ class ReplicationPathPricer : public PathPricer<Path> {
 		Real strike_;
 		boost::shared_ptr<YieldTermStructure> OISTermStructure_;
 		Time maturity_;
-		boost::shared_ptr<BlackVarianceSurface> sigma_;
+		//boost::shared_ptr<BlackVarianceSurface> sigma_;
+		Volatility sigma_;
 };
 
 
