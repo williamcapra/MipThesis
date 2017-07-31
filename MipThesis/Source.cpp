@@ -41,6 +41,7 @@ int main(int, char*[]) {
 		//discounting curve and volatility term structure
 		auto OISTermStructure = MarketData::builddiscountingcurve(settlementDate, fixingDays);
 		auto varTS = MarketData::buildblackvariancesurface(settlementDate, calendar);
+		auto bondTermStructure = MarketData::buildbonddiscountingcurve(settlementDate, fixingDays);
 
 		//declaration of the ReplicatonError class
 		ReplicationError rp(Option::Call, maturity, strike, underlying, varTS, OISTermStructure);
@@ -49,10 +50,10 @@ int main(int, char*[]) {
 		Size scenarios = 50000;
 		Size hedgesNum;
 
-		hedgesNum = 21;
+		hedgesNum = 1;
 		rp.compute(hedgesNum, scenarios);
 
-		hedgesNum = 84;
+		hedgesNum = 3;
 		rp.compute(hedgesNum, scenarios);
 
 		double seconds = timer.elapsed();

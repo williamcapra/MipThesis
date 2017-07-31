@@ -294,9 +294,9 @@ boost::shared_ptr<BlackVarianceSurface> MarketData::buildblackvariancesurface(Da
 	Real K[] = { 14.00, 14.25, 14.50, 14.75, 15.00, 15.25, 15.50, 15.75, 16.00, 16.25, 16.50, 16.75, 17.00,
 		17.25, 17.50, 17.75, 18.00, 18.50, 19.00, 20.00 };
 
-	std::vector<Real> strikes(K, K + LENGTH(K)); //è un oggetto...
+	std::vector<Real> strikes(K, K + LENGTH(K)); //è un oggetto
 
-												 //volatility surface construction
+	//volatility surface construction
 
 	Volatility v[] =
 	{ 0.23840, 0.21910, 0.19870, 0.17790, 0.15990, 0.14340, 0.13260, 0.13320, 0.13700, 0.14240, 0.15140, 0.16200, 0.17150, 0.17950, 0.18600, 0.19150, 0.19610, 0.20340, 0.20920, 0.21660,
@@ -346,15 +346,151 @@ boost::shared_ptr<BlackVarianceSurface> MarketData::buildblackvariancesurface(Da
 
 	varTS->enableExtrapolation(true);
 	varTS->setInterpolation<Bicubic>();
-
-	//Cubic myInterpolation(CubicInterpolation::BoundaryCondition rightCondition
-	//= CubicInterpolation::FirstDerivative, CubicInterpolation::BoundaryCondition leftCondition
-	//= CubicInterpolation::FirstDerivative);
-
-
-	//SvarTS->setInterpolation<CubicInterpolation::BoundaryCondition::SecondDerivative>;
-	//varTS->enableExtrapolation(false);
-
+	
 	return varTS;
 
+}
+
+
+boost::shared_ptr<YieldTermStructure> MarketData::buildbonddiscountingurve(Date settlementDate, Natural fixingDays) {
+
+	Calendar calendar = TARGET();
+
+	// ZC rates for the short end
+	Rate zc3mQuote = 0.0096;
+	Rate zc6mQuote = 0.0145;
+	Rate zc1yQuote = 0.0194;
+
+	//long-term quotes: Coupon Bonds
+
+	// setup bonds
+	Real redemption = 100.0;
+	Date issueDates[] = { Date(15, March, 2015),
+		Date(15, June, 2015),
+		Date(30, June, 2016),
+		Date(15, November, 2012),
+		Date(15, May, 1997) };
+	Date maturities[] = { Date(31, August, 2020),
+		Date(31, August, 2021),
+		Date(31, August, 2023),
+		Date(15, August, 2028),
+		Date(15, May, 2048) };
+	Real couponRates[] = { 0.02375, 0.04625, 0.03125, 0.04000, 0.04500 };
+	Real marketQuotes[] = { 100.390625,	106.21875,	100.59375,	101.6875, 102.140625 };
+	Real numberOfBonds = LENGTH(couponRates);
+
+	/********************
+	***    QUOTES    ***
+	********************/
+
+	// SimpleQuote stores a value which can be manually changed;
+	// other Quote subclasses could read the value from a database
+	// or some kind of data feed.
+
+	//short-term quotes
+
+	boost::shared_ptr<Quote> zc3mRate(new SimpleQuote(zc3mQuote));
+	boost::shared_ptr<Quote> zc6mRate(new SimpleQuote(zc6mQuote));
+	boost::shared_ptr<Quote> zc1yRate(new SimpleQuote(zc1yQuote));
+
+	//long-term quotes
+
+	boost::shared_ptr<Quote> cb1Rate(new SimpleQuote(marketQuotes[0]));
+	boost::shared_ptr<Quote> cb2Rate(new SimpleQuote(marketQuotes[1]));
+	boost::shared_ptr<Quote> cb3Rate(new SimpleQuote(marketQuotes[2]));
+	boost::shared_ptr<Quote> cb4Rate(new SimpleQuote(marketQuotes[3]));
+	boost::shared_ptr<Quote> cb5Rate(new SimpleQuote(marketQuotes[4]));
+
+	std::vector< boost::shared_ptr<SimpleQuote> > quote;
+	for (Size i = 0; i<numberOfBonds; i++) {
+		boost::shared_ptr<SimpleQuote> cp(new SimpleQuote(marketQuotes[i]));
+		quote.push_back(cp);
+	}
+
+
+	/*********************
+	***  RATE HELPERS ***
+	*********************/
+
+	// RateHelpers are built from the above quotes together with
+	// other instrument dependant infos.  Quotes are passed in
+	// relinkable handles which could be relinked to some other
+	// data source later.
+
+	//DepositRateHelper
+
+	DayCounter zcBondsDayCounter = Actual365Fixed();
+	boost::shared_ptr<RateHelper> zc3m(new DepositRateHelper(
+		Handle<Quote>(zc3mRate),
+		3 * Months, fixingDays,
+		calendar, ModifiedFollowing,
+		true, zcBondsDayCounter));
+	boost::shared_ptr<RateHelper> zc6m(new DepositRateHelper(
+		Handle<Quote>(zc6mRate),
+		6 * Months, fixingDays,
+		calendar, ModifiedFollowing,
+		true, zcBondsDayCounter));
+	boost::shared_ptr<RateHelper> zc1y(new DepositRateHelper(
+		Handle<Quote>(zc1yRate),
+		1 * Years, fixingDays,
+		calendar, ModifiedFollowing,
+		true, zcBondsDayCounter));
+
+	//BondRateHelper
+	DayCounter FixedBondsDayCounter = ActualActual(ActualActual::Bond);
+
+	std::vector<boost::shared_ptr<BondHelper> > bondsHelpers;
+
+	for (Size i = 0; i<numberOfBonds; i++) {
+
+		Schedule schedule(issueDates[i], maturities[i], Period(Semiannual), calendar,
+			Unadjusted, Unadjusted, DateGeneration::Backward, false);
+
+		boost::shared_ptr<FixedRateBondHelper> bondHelper(new FixedRateBondHelper(
+			Handle<Quote>(quote[i]),
+			fixingDays,
+			redemption,
+			schedule,
+			std::vector<Rate>(1, couponRates[i]),
+			ActualActual(ActualActual::Bond),
+			Unadjusted,
+			redemption,
+			issueDates[i]));
+
+		bondsHelpers.push_back(bondHelper);
+	}
+
+
+	/*********************
+	**  CURVE BUILDING **
+	*********************/
+
+	// Any DayCounter would be fine.
+	// ActualActual::ISDA ensures that 30 years is 30.0
+	DayCounter termStructureDayCounter =
+		ActualActual(ActualActual::ISDA);
+
+	double tolerance = 1.0e-15;
+
+	// A depo-bond curve
+
+	std::vector<boost::shared_ptr<RateHelper> > bondInstruments;
+
+	// Adding the ZC bonds to the curve for the short end
+	bondInstruments.push_back(zc3m);
+	bondInstruments.push_back(zc6m);
+	bondInstruments.push_back(zc1y);
+
+	// Adding the the Fixed rate bonds to the curve for the long end
+	for (Size i = 0; i<numberOfBonds; i++) {
+		bondInstruments.push_back(bondsHelpers[i]);
+	}
+
+	boost::shared_ptr<YieldTermStructure> bondDiscountingTermStructure(
+		new PiecewiseYieldCurve<Discount, LogLinear>(
+			settlementDate, bondInstruments,
+			termStructureDayCounter,
+			tolerance));
+
+	return bondDiscountingTermStructure;
 }

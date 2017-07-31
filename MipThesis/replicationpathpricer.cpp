@@ -53,18 +53,17 @@ Real ReplicationPathPricer::operator()(const Path& path) const {
 	boost::shared_ptr<StrikedTypePayoff> payoff(new PlainVanillaPayoff(type_, strike_));
 	BlackCalculator black(payoff, forward, stdDev, rDiscount);
 
-
-	std::cout << "Option value: " << black.value() << std::endl
-		<< "T: " << maturity_ << std::endl
-		<< "Underlying value: " << stock << std::endl
-		<< "Strike: " << strike_ << std::endl
-		<< "Volatility: " << std::sqrt(sigma_->blackVariance(maturity_, strike_) / maturity_) << std::endl
-		<< "Volatility_blackVol " << sigma_->blackVol(maturity_, strike_, true) << std::endl
-		<< "Risk-Free Rate: " << OISTermStructure_->zeroRate(maturity_, Compounding::Continuous) << std::endl
-		<< "Discount Factor: " << OISTermStructure_->discount(maturity_) << std::endl
-		<< "Forward: " << forward << std::endl;
-
-
+	//result-check
+	//std::cout << "Option value: " << black.value() << std::endl
+		//<< "T: " << maturity_ << std::endl
+		//<< "Underlying value: " << stock << std::endl
+		//<< "Strike: " << strike_ << std::endl
+		//<< "Volatility: " << std::sqrt(sigma_->blackVariance(maturity_, strike_) / maturity_) << std::endl
+		//<< "Volatility_blackVol " << sigma_->blackVol(maturity_, strike_, true) << std::endl
+		//<< "Risk-Free Rate: " << OISTermStructure_->zeroRate(maturity_, Compounding::Continuous) << std::endl
+		//<< "Discount Factor: " << OISTermStructure_->discount(maturity_) << std::endl
+		//<< "Forward: " << forward << std::endl;
+	
 	// sell the option, cash in its premium
 	money_account += black.value();
 	// compute delta

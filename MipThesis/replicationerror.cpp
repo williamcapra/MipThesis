@@ -21,15 +21,17 @@ ReplicationError::ReplicationError(Option::Type type,
 	Real stdDev = std::sqrt(sigma_->blackVariance(maturity_, strike_));
 	boost::shared_ptr<StrikedTypePayoff> payoff(new PlainVanillaPayoff(payoff_));
 	BlackCalculator black(payoff, forward, stdDev, rDiscount);
-	std::cout << "Option value: " << black.value() << std::endl
-		<< "T: " << maturity_ << std::endl
-		<< "Underlying value: " << s0_->value() << std::endl
-		<< "Strike: " << strike << std::endl
-		<< "Volatility: " << std::sqrt(sigma_->blackVariance(maturity_, strike_) / maturity_) << std::endl
-		<< "Volatility_blackVol " << sigma_->blackVol(maturity_, strike_, true) << std::endl
-		<< "Risk-Free Rate: " << OISTermStructure_->zeroRate(maturity_, Compounding::Continuous) << std::endl
-		<< "Discount Factor: " << OISTermStructure_->discount(maturity_) << std::endl
-		<< "Forward: " << forward << std::endl;
+
+	//result-check
+	//std::cout << "Option value: " << black.value() << std::endl
+		//<< "T: " << maturity_ << std::endl
+		//<< "Underlying value: " << s0_->value() << std::endl
+		//<< "Strike: " << strike << std::endl
+		//<< "Volatility: " << std::sqrt(sigma_->blackVariance(maturity_, strike_) / maturity_) << std::endl
+		//<< "Volatility_blackVol " << sigma_->blackVol(maturity_, strike_, true) << std::endl
+		//<< "Risk-Free Rate: " << OISTermStructure_->zeroRate(maturity_, Compounding::Continuous) << std::endl
+		//<< "Discount Factor: " << OISTermStructure_->discount(maturity_) << std::endl
+		//<< "Forward: " << forward << std::endl;
 
 	// store option's vega, since Derman and Kamal's formula needs it
 	vega_ = black.vega(maturity_);
@@ -65,17 +67,17 @@ void ReplicationError::compute(Size nTimeSteps, Size nSamples)
 	// hedging interval
 	// Time tau = maturity_ / nTimeSteps;
 
-
 	Calendar calendar = TARGET();
 	DayCounter dayCount = Actual365Fixed();
 
-	boost::shared_ptr<StochasticProcess1D> diffusion(new BlackScholesProcess(Handle<Quote>(s0_),
+	boost::shared_ptr<StochasticProcess1D> diffusion(new BlackScholesNoLocalVolProcess(Handle<Quote>(s0_),
 		Handle<YieldTermStructure>(OISTermStructure_),
 		Handle<BlackVolTermStructure>(sigma_)));
 
 	// Black Scholes equation rules the path generator:
 	// at each step the log of the stock
 	// will have drift and sigma^2 variance
+
 	PseudoRandom::rsg_type rsg =
 		PseudoRandom::make_sequence_generator(nTimeSteps, 0);
 
@@ -94,7 +96,6 @@ void ReplicationError::compute(Size nTimeSteps, Size nSamples)
 
 	boost::shared_ptr<PathPricer<Path>> myPathPricer(
 		new ReplicationPathPricer(payoff_.optionType(), strike_, OISTermStructure_, maturity_, pricersigma));
-
 
 	// a statistics accumulator for the path-dependant Profit&Loss values
 	Statistics statisticsAccumulator;
@@ -119,7 +120,7 @@ void ReplicationError::compute(Size nTimeSteps, Size nSamples)
 	Real PLKurt = MCSimulation.sampleAccumulator().kurtosis();
 
 	// Derman and Kamal's formula
-	Real theorStD = std::sqrt(M_PI / 4 / nTimeSteps)*vega_*std::sqrt(sigma_->blackVariance(maturity_, strike_) / maturity_);
+	Real theorStD = std::sqrt(M_PI / 4 / nTimeSteps)*vega_*std::sqrt(pricersigma->blackVariance(maturity_, strike_) / maturity_);
 
 	std::cout << std::fixed
 		<< std::setw(8) << nSamples << " | "
