@@ -14,13 +14,13 @@ struct MarketData {
 
 
 	static boost::shared_ptr<YieldTermStructure> builddiscountingcurve(Date settlementDate,
-																	   Natural fixingDays);
+		Natural fixingDays);
 
 	static boost::shared_ptr<BlackVarianceSurface> buildblackvariancesurface(Date settlementDate,
-																		Calendar calendar);
+		Calendar calendar);
 
 	static boost::shared_ptr<YieldTermStructure> buildbonddiscountingurve(Date settlementDate,
-																		Natural fixingDays);
+		Natural fixingDays);
 
 };
 

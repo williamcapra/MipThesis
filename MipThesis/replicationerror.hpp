@@ -19,7 +19,7 @@ class ReplicationError {
 			Real strike,
 			boost::shared_ptr<Quote> s0,
 			//boost::shared_ptr<BlackVarianceSurface> varTS,
-			Volatility varTS,
+			Volatility vol,
 			boost::shared_ptr<YieldTermStructure> OISTermStructure);
 
 		// the actual replication error computation

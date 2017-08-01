@@ -9,9 +9,9 @@ ReplicationPathPricer::ReplicationPathPricer(Option::Type type,
 											 Real strike,
 											 boost::shared_ptr<YieldTermStructure> OISTermStructure,
 											 Time maturity,
-											 Volatility varTS)
+											 Volatility vol)
 											 //boost::shared_ptr<BlackVarianceSurface> varTS)
-	: type_(type), strike_(strike), OISTermStructure_(OISTermStructure), maturity_(maturity), sigma_(varTS) {
+	: type_(type), strike_(strike), OISTermStructure_(OISTermStructure), maturity_(maturity), sigma_(vol) {
 	QL_REQUIRE(strike_ > 0.0, "strike must be positive");
 	QL_REQUIRE(maturity_ > 0.0, "maturity must be positive");
 }

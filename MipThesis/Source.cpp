@@ -33,24 +33,21 @@ int main(int, char*[]) {
 
 		//option input-data		
 		Date optionExpiryDate(03, June, 2020);
-		//Date optionExpiryDate(02, May, 2017);
 		Time maturity = dayCount.yearFraction(settlementDate, optionExpiryDate);
 		Real strike = 18.81;
-		//boost::shared_ptr<Quote> underlying(new SimpleQuote(18.81));
 		boost::shared_ptr<Quote> underlying(new SimpleQuote(15.35));
 
 		//discounting curve and volatility term structure
 		auto OISTermStructure = MarketData::builddiscountingcurve(settlementDate, fixingDays);
-		//auto varTS = MarketData::buildblackvariancesurface(settlementDate, calendar);
-		Volatility varTS = 0.2331;
-
+		auto varTS = MarketData::buildblackvariancesurface(settlementDate, calendar);
+		Volatility sigma = varTS->blackVol(optionExpiryDate, strike);
+				
 		//declaration of the ReplicatonError class
-		ReplicationError rp(Option::Call, maturity, strike, underlying, varTS, OISTermStructure);
+		ReplicationError rp(Option::Call, maturity, strike, underlying, sigma, OISTermStructure);
 
 		//initialization of the ReplicationError.compute() method
 		Size scenarios = 50000;
 		Size hedgesNum;
-
 	
 		//hedging ones a year
 		hedgesNum = 3;

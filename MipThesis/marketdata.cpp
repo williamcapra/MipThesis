@@ -342,11 +342,9 @@ boost::shared_ptr<BlackVarianceSurface> MarketData::buildblackvariancesurface(Da
 			strikes, blackVolMatrix,
 			dc));
 
-	// Change interpolator to bicubic splines
-
 	varTS->enableExtrapolation(true);
-	varTS->setInterpolation<Bicubic>();
-	
+	//varTS->setInterpolation<Bicubic>();
+		
 	return varTS;
 
 }
@@ -357,8 +355,8 @@ boost::shared_ptr<YieldTermStructure> MarketData::buildbonddiscountingurve(Date 
 	Calendar calendar = TARGET();
 
 	//long-term quotes: Coupon Bonds
-
 	// setup bonds
+
 	Real redemption = 100.0;
 	Date issueDates[] = { 
 		Date(19, September, 2016),
@@ -386,6 +384,19 @@ boost::shared_ptr<YieldTermStructure> MarketData::buildbonddiscountingurve(Date 
 		Date(18, December, 2025),
 		Date(01, July, 2022)			
 	};
+	Period periods[] = {
+		Period(NoFrequency),
+		Period(NoFrequency),
+		Period(Annual),
+		Period(Annual),
+		Period(Annual),
+		Period(Quarterly),
+		Period(Annual),
+		Period(Annual),
+		Period(Annual),
+		Period(Annual),
+		Period(Semiannual),
+	};
 	Real couponRates[] = { 0.035, 0.035, 1, 1.56, 1,015, 2.25, 0.9, 2.104, 0.625, 1.375, 4.05 };
 	Real marketQuotes[] = { 99.969, 100.02, 99.98, 100.99, 100.588, 102.588, 102.542, 100.5, 101.996, 101.754, 103.606, 112.642};
 	Real numberOfBonds = LENGTH(couponRates);
@@ -393,10 +404,6 @@ boost::shared_ptr<YieldTermStructure> MarketData::buildbonddiscountingurve(Date 
 	/********************
 	***    QUOTES    ***
 	********************/
-
-	// SimpleQuote stores a value which can be manually changed;
-	// other Quote subclasses could read the value from a database
-	// or some kind of data feed.
 
 	//long-term quotes
 
@@ -411,102 +418,31 @@ boost::shared_ptr<YieldTermStructure> MarketData::buildbonddiscountingurve(Date 
 	*********************/
 
 	// RateHelpers are built from the above quotes together with
-	// other instrument dependant infos.  Quotes are passed in
-	// relinkable handles which could be relinked to some other
-	// data source later.
-
-	//DepositRateHelper
+	// other instrument dependant infos.
 
 	//BondRateHelper
-	DayCounter FixedBondsDayCounter = ActualActual(ActualActual::Bond);
 
+	DayCounter FixedBondsDayCounter = ActualActual(ActualActual::Bond);
 	std::vector<boost::shared_ptr<BondHelper> > bondsHelpers;
 
-	for (Size i = 0; i<2; i++) {
+	for (Size i = 0; i<numberOfBonds; i++) {
 
-		Schedule scheduleNoFreq(issueDates[i], maturities[i], Period(NoFrequency), calendar,
+		Schedule schedule(issueDates[i], maturities[i], periods[i], calendar,
 			Unadjusted, Unadjusted, DateGeneration::Backward, false);
-		boost::shared_ptr<FixedRateBondHelper> bondHelper1(new FixedRateBondHelper(
+
+		boost::shared_ptr<FixedRateBondHelper> bondHelper(new FixedRateBondHelper(
 			Handle<Quote>(quote[i]),
 			fixingDays,
 			redemption,
-			scheduleNoFreq,
+			schedule,
 			std::vector<Rate>(1, couponRates[i]),
-			ActualActual(ActualActual::Bond),
+			FixedBondsDayCounter,
 			Unadjusted,
 			redemption,
 			issueDates[i]));
 
-		bondsHelpers.push_back(bondHelper1);
+		bondsHelpers.push_back(bondHelper);
 	}
-
-	for (Size i = 2; i<5; i++) {
-
-		Schedule scheduleAnnual(issueDates[i], maturities[i], Period(Annual), calendar,
-			Unadjusted, Unadjusted, DateGeneration::Backward, false);
-		boost::shared_ptr<FixedRateBondHelper> bondHelper2(new FixedRateBondHelper(
-			Handle<Quote>(quote[i]),
-			fixingDays,
-			redemption,
-			scheduleAnnual,
-			std::vector<Rate>(1, couponRates[i]),
-			ActualActual(ActualActual::Bond),
-			Unadjusted,
-			redemption,
-			issueDates[i]));
-
-		bondsHelpers.push_back(bondHelper2);
-	}
-
-	Schedule scheduleQuarterly(issueDates[5], maturities[5], Period(Quarterly), calendar,
-			Unadjusted, Unadjusted, DateGeneration::Backward, false);
-		boost::shared_ptr<FixedRateBondHelper> bondHelper3(new FixedRateBondHelper(
-			Handle<Quote>(quote[5]),
-			fixingDays,
-			redemption,
-			scheduleQuarterly,
-			std::vector<Rate>(1, couponRates[5]),
-			ActualActual(ActualActual::Bond),
-			Unadjusted,
-			redemption,
-			issueDates[5]));
-
-		bondsHelpers.push_back(bondHelper3);
-
-	for (Size i = 6; i<10; i++) {
-
-		Schedule scheduleAnnual_2(issueDates[i], maturities[i], Period(Annual), calendar,
-			Unadjusted, Unadjusted, DateGeneration::Backward, false);
-		boost::shared_ptr<FixedRateBondHelper> bondHelper4(new FixedRateBondHelper(
-			Handle<Quote>(quote[i]),
-			fixingDays,
-			redemption,
-			scheduleAnnual_2,
-			std::vector<Rate>(1, couponRates[i]),
-			ActualActual(ActualActual::Bond),
-			Unadjusted,
-			redemption,
-			issueDates[i]));
-
-		bondsHelpers.push_back(bondHelper4);
-	}
-
-	Schedule scheduleSemiannual(issueDates[10], maturities[10], Period(Semiannual), calendar,
-		Unadjusted, Unadjusted, DateGeneration::Backward, false);
-
-	boost::shared_ptr<FixedRateBondHelper> bondHelper5(new FixedRateBondHelper(
-		Handle<Quote>(quote[10]),
-		fixingDays,
-		redemption,
-		scheduleSemiannual,
-		std::vector<Rate>(1, couponRates[10]),
-		ActualActual(ActualActual::Bond),
-		Unadjusted,
-		redemption,
-		issueDates[10]));
-
-	bondsHelpers.push_back(bondHelper5);
-
 
 	/*********************
 	**  CURVE BUILDING **
@@ -514,13 +450,10 @@ boost::shared_ptr<YieldTermStructure> MarketData::buildbonddiscountingurve(Date 
 
 	// Any DayCounter would be fine.
 	// ActualActual::ISDA ensures that 30 years is 30.0
-	DayCounter termStructureDayCounter =
-		ActualActual(ActualActual::ISDA);
-
+	DayCounter termStructureDayCounter = ActualActual(ActualActual::ISDA);
 	double tolerance = 1.0e-15;
 
 	// A depo-bond curve
-
 	std::vector<boost::shared_ptr<RateHelper> > bondInstruments;
 
 	// Adding the the Fixed rate bonds to the curve for the long end

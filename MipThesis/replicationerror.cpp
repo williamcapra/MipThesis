@@ -11,9 +11,9 @@ ReplicationError::ReplicationError(Option::Type type,
 								   Real strike,
 								   boost::shared_ptr<Quote> s0,
 								   //boost::shared_ptr<BlackVarianceSurface> varTS,
-								   Volatility varTS,
+								   Volatility vol,
 								   boost::shared_ptr<YieldTermStructure> OISTermStructure)
-	: maturity_(maturity), payoff_(type, strike), strike_(strike), s0_(s0), sigma_(varTS), OISTermStructure_(OISTermStructure) {
+	: maturity_(maturity), payoff_(type, strike), strike_(strike), s0_(s0), sigma_(vol), OISTermStructure_(OISTermStructure) {
 
 	// value of the option
 	DiscountFactor rDiscount = OISTermStructure_->discount(maturity_);
@@ -24,6 +24,7 @@ ReplicationError::ReplicationError(Option::Type type,
 	boost::shared_ptr<StrikedTypePayoff> payoff(new PlainVanillaPayoff(payoff_));
 	BlackCalculator black(payoff, forward, stdDev, rDiscount);
 	std::cout << "Option value: " << black.value() << std::endl;
+	
 
 	// store option's vega, since Derman and Kamal's formula needs it
 	vega_ = black.vega(maturity_);
@@ -63,16 +64,11 @@ void ReplicationError::compute(Size nTimeSteps, Size nSamples)
 	DayCounter dayCount = Actual365Fixed();
 	Date settlementDate(04, April, 2017);
 
-	Handle<BlackVolTermStructure> volatility(
-		boost::shared_ptr<BlackVolTermStructure>(new BlackConstantVol(settlementDate, calendar, sigma_, dayCount)));
-
-	Handle<YieldTermStructure> dividendYield(
-		boost::shared_ptr<YieldTermStructure>(new FlatForward(settlementDate, 0.00, dayCount)));
+	const boost::shared_ptr<BlackVolTermStructure> volatility(new BlackConstantVol(settlementDate, calendar, sigma_, dayCount));
 			
-	boost::shared_ptr<StochasticProcess1D> diffusion(new BlackScholesMertonProcess(Handle<Quote>(s0_), 
-		dividendYield, Handle<YieldTermStructure>(OISTermStructure_),
-		//Handle<BlackVolTermStructure>(sigma_)));
-		volatility));
+	boost::shared_ptr<StochasticProcess1D> diffusion(new BlackScholesProcess(Handle<Quote>(s0_), 
+		Handle<YieldTermStructure>(OISTermStructure_),
+		Handle<BlackVolTermStructure>(volatility)));
 
 	// Black Scholes equation rules the path generator:
 	// at each step the log of the stock
