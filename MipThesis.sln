@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.16
+VisualStudioVersion = 15.0.26430.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MipThesis", "MipThesis\MipThesis.vcxproj", "{B10BA1C0-E689-4EF3-9D55-D5F604C4B50E}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QuantLib", "QuantLib\QuantLib.vcxproj", "{AD0A27DA-91DA-46A2-ACBD-296C419ED3AA}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MipAutocallable", "MipAutocallable\MipAutocallable.vcxproj", "{D86D258D-54E5-4EBD-9FC9-40F5D56156C6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,6 +53,22 @@ Global
 		{AD0A27DA-91DA-46A2-ACBD-296C419ED3AA}.Release|x64.Build.0 = Release|x64
 		{AD0A27DA-91DA-46A2-ACBD-296C419ED3AA}.Release|x86.ActiveCfg = Release|Win32
 		{AD0A27DA-91DA-46A2-ACBD-296C419ED3AA}.Release|x86.Build.0 = Release|Win32
+		{D86D258D-54E5-4EBD-9FC9-40F5D56156C6}.Debug (static runtime)|x64.ActiveCfg = Debug|x64
+		{D86D258D-54E5-4EBD-9FC9-40F5D56156C6}.Debug (static runtime)|x64.Build.0 = Debug|x64
+		{D86D258D-54E5-4EBD-9FC9-40F5D56156C6}.Debug (static runtime)|x86.ActiveCfg = Debug|Win32
+		{D86D258D-54E5-4EBD-9FC9-40F5D56156C6}.Debug (static runtime)|x86.Build.0 = Debug|Win32
+		{D86D258D-54E5-4EBD-9FC9-40F5D56156C6}.Debug|x64.ActiveCfg = Debug|x64
+		{D86D258D-54E5-4EBD-9FC9-40F5D56156C6}.Debug|x64.Build.0 = Debug|x64
+		{D86D258D-54E5-4EBD-9FC9-40F5D56156C6}.Debug|x86.ActiveCfg = Debug|Win32
+		{D86D258D-54E5-4EBD-9FC9-40F5D56156C6}.Debug|x86.Build.0 = Debug|Win32
+		{D86D258D-54E5-4EBD-9FC9-40F5D56156C6}.Release (static runtime)|x64.ActiveCfg = Release|x64
+		{D86D258D-54E5-4EBD-9FC9-40F5D56156C6}.Release (static runtime)|x64.Build.0 = Release|x64
+		{D86D258D-54E5-4EBD-9FC9-40F5D56156C6}.Release (static runtime)|x86.ActiveCfg = Release|Win32
+		{D86D258D-54E5-4EBD-9FC9-40F5D56156C6}.Release (static runtime)|x86.Build.0 = Release|Win32
+		{D86D258D-54E5-4EBD-9FC9-40F5D56156C6}.Release|x64.ActiveCfg = Release|x64
+		{D86D258D-54E5-4EBD-9FC9-40F5D56156C6}.Release|x64.Build.0 = Release|x64
+		{D86D258D-54E5-4EBD-9FC9-40F5D56156C6}.Release|x86.ActiveCfg = Release|Win32
+		{D86D258D-54E5-4EBD-9FC9-40F5D56156C6}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -469,3 +469,35 @@ boost::shared_ptr<YieldTermStructure> MarketData::buildbonddiscountingurve(Date 
 
 	return bondDiscountingTermStructure;
 }
+
+
+boost::shared_ptr<YieldTermStructure> MarketData::builddividendcurve(Date settlementDate, Natural fixingDays, boost::shared_ptr<YieldTermStructure> OISTermStructure) {
+
+	Real s0 = 15.35;
+
+	std::vector<Date> dates = {
+
+		Date(06, April, 2017)
+	};
+
+	std::vector<Real> fwd = {
+		15.30
+	};
+
+	std::vector<Real> qDiscount;
+
+	for (auto i = 0; i != dates.size()-1; ++i) {
+		
+		auto qFactor = (fwd[i] / s0)*OISTermStructure->discount(dates[i]);
+		qDiscount.push_back(qFactor);
+
+	}
+
+	boost::shared_ptr<YieldTermStructure> dividendcurve(
+		new InterpolatedDiscountCurve<LogLinear>(dates, 
+												 qDiscount,
+												 OISTermStructure->dayCounter(),
+												 OISTermStructure->calendar()));
+	
+	return dividendcurve;
+}
