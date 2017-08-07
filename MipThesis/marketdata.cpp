@@ -475,18 +475,78 @@ boost::shared_ptr<YieldTermStructure> MarketData::builddividendcurve(Date settle
 
 	Real s0 = 15.35;
 
-	std::vector<Date> dates = {
+	//dates
+	Date expiry0(04, April, 2017);
+	Date expiry1(06, April, 2017);
+	Date expiry2(07, April, 2017);
+	Date expiry3(13, April, 2017);
+	Date expiry4(20, April, 2017);
+	Date expiry5(21, April, 2017);
+	Date expiry6(27, April, 2017);
+	Date expiry7(18, May, 2017);
+	Date expiry8(19, May, 2017);
+	Date expiry9(15, June, 2017);
+	Date expiry10(16, June, 2017);
+	Date expiry11(29, June, 2017);
+	Date expiry12(14, September, 2017);
+	Date expiry13(15, September, 2017);
+	Date expiry14(14, December, 2017);
+	Date expiry15(15, December, 2017);
+	Date expiry16(15, March, 2018);
+	Date expiry17(16, March, 2018);
+	Date expiry18(14, June, 2018);
+	Date expiry19(15, June, 2018);
+	Date expiry20(20, December, 2018);
+	Date expiry21(21, December, 2018);
+	Date expiry22(20, June, 2019);
+	Date expiry23(21, June, 2019);
+	Date expiry24(19, December, 2019);
+	Date expiry25(20, December, 2019);
+	Date expiry26(17, December, 2020);
+	Date expiry27(16, December, 2021);
+	Date expiry28(31, December, 2021);
+	Date expiry29(30, December, 2022);
 
-		Date(06, April, 2017)
-	};
+	std::vector<Date> dates;
+	dates.push_back(expiry0);
+	dates.push_back(expiry1);
+	dates.push_back(expiry2);
+	dates.push_back(expiry3);
+	dates.push_back(expiry4);
+	dates.push_back(expiry5);
+	dates.push_back(expiry6);
+	dates.push_back(expiry7);
+	dates.push_back(expiry8);
+	dates.push_back(expiry9);
+	dates.push_back(expiry10);
+	dates.push_back(expiry11);
+	dates.push_back(expiry12);
+	dates.push_back(expiry13);
+	dates.push_back(expiry14);
+	dates.push_back(expiry15);
+	dates.push_back(expiry16);
+	dates.push_back(expiry17);
+	dates.push_back(expiry18);
+	dates.push_back(expiry19);
+	dates.push_back(expiry20);
+	dates.push_back(expiry21);
+	dates.push_back(expiry22);
+	dates.push_back(expiry23);
+	dates.push_back(expiry24);
+	dates.push_back(expiry25);
+	dates.push_back(expiry26);
+	dates.push_back(expiry27);
+	dates.push_back(expiry28);
+	dates.push_back(expiry29);
 
-	std::vector<Real> fwd = {
-		15.30
-	};
+	Real forward[] = { 15.35, 15.30, 15.30, 15.30, 15.30, 15.30, 14.90, 14.90, 14.90, 14.89, 14.89, 14.89, 14.88, 14.88, 14.53, 14.53, 14.53, 14.53, 14.21, 14.21,
+		13.89, 13.89, 13.58, 13.58, 13.29, 13.29, 12.74, 12.24, 12.25, 11.80 };
+
+	std::vector<Real> fwd(forward, forward + LENGTH(forward));
 
 	std::vector<Real> qDiscount;
 
-	for (auto i = 0; i != dates.size()-1; ++i) {
+	for (auto i = 0; i < dates.size(); ++i) {
 		
 		auto qFactor = (fwd[i] / s0)*OISTermStructure->discount(dates[i]);
 		qDiscount.push_back(qFactor);

@@ -1,7 +1,6 @@
 #include <ql/quantlib.hpp>
 #include <replicationpathpricer.hpp>
 
-
 using namespace QuantLib;
 
 // real constructor
@@ -48,7 +47,7 @@ Real ReplicationPathPricer::operator()(const Path& path) const {
 	// option fair price (Black-Scholes) at t=0	
 
 	DiscountFactor rDiscount = OISTermStructure_->discount(maturity_);
-	DiscountFactor qDiscount = 1.00;
+	DiscountFactor qDiscount = 1.0;
 	Real forward = stock*qDiscount/rDiscount;
 	Real stdDev = std::sqrt(sigma_*sigma_*maturity_);
 	//Real stdDev = std::sqrt(sigma_->blackVariance(maturity_, strike_));

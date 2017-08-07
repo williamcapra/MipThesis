@@ -19,13 +19,14 @@ ReplicationError::ReplicationError(Option::Type type,
 	DiscountFactor rDiscount = OISTermStructure_->discount(maturity_);
 	DiscountFactor qDiscount = 1.0;
 	Real forward = (s0_->value())*qDiscount / rDiscount;
+
 	//Real stdDev = std::sqrt(sigma_->blackVariance(maturity_, strike_));
+
 	Real stdDev = std::sqrt(sigma_*sigma_*maturity_);
 	boost::shared_ptr<StrikedTypePayoff> payoff(new PlainVanillaPayoff(payoff_));
 	BlackCalculator black(payoff, forward, stdDev, rDiscount);
 	std::cout << "Option value: " << black.value() << std::endl;
 	
-
 	// store option's vega, since Derman and Kamal's formula needs it
 	vega_ = black.vega(maturity_);
 
@@ -65,8 +66,8 @@ void ReplicationError::compute(Size nTimeSteps, Size nSamples)
 	Date settlementDate(04, April, 2017);
 
 	const boost::shared_ptr<BlackVolTermStructure> volatility(new BlackConstantVol(settlementDate, calendar, sigma_, dayCount));
-			
-	boost::shared_ptr<StochasticProcess1D> diffusion(new BlackScholesProcess(Handle<Quote>(s0_), 
+	
+	boost::shared_ptr<StochasticProcess1D> diffusion(new BlackScholesProcess(Handle<Quote>(s0_),
 		Handle<YieldTermStructure>(OISTermStructure_),
 		Handle<BlackVolTermStructure>(volatility)));
 
