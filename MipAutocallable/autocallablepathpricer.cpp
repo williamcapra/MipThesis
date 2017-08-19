@@ -57,7 +57,7 @@ Real AutocallablePathPricer::operator()(const Path& path) const {
 	Date thirdpaymentdate(03, March, 2020);
 
 	//bond settings
-	Real faceAmount = 1000;
+	Real faceAmount = 1000.0;
 	boost::shared_ptr<PricingEngine> bondEngine(new DiscountingBondEngine(Handle<YieldTermStructure>(bondTermStructure_)));
 	ZeroCouponBond firstZeroCouponBond(2, calendar,	faceAmount,	firstpaymentdate, Following, Real(100.0), settlementDate_);
 	firstZeroCouponBond.setPricingEngine(bondEngine);
@@ -69,7 +69,6 @@ Real AutocallablePathPricer::operator()(const Path& path) const {
 	thirdZeroCouponBond.setPricingEngine(bondEngine);
 	
 	//MC initialization
-	Size n = path.length() - 1;
 	Real price = 0.00;
 
 	if (path.value(firstevaluation1) >= firstlevel || path.value(firstevaluation2) >= firstlevel || path.value(firstevaluation3) >= firstlevel
