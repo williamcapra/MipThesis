@@ -49,7 +49,7 @@ int main(int, char*[]) {
 		Size scenarios = 50000;
 		Size hedgesNum;
 	
-		//hedging ones a year
+		//hedging once a year
 		hedgesNum = 3;
 		rp.compute(hedgesNum, scenarios);
 

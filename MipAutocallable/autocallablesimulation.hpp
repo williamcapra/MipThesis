@@ -23,7 +23,7 @@ public:
 		Date settlementDate);
 
 	// the actual price computation over the MC scenario
-	void compute(Size nTimeSteps, Size nSamples);
+	void compute(Size nTimeSteps, Size nSamples, char modelType);
 
 private:
 	boost::shared_ptr<Quote> underlying_;

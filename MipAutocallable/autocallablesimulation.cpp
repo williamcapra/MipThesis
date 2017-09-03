@@ -17,48 +17,124 @@ AutocallableSimulation::AutocallableSimulation(boost::shared_ptr<Quote> underlyi
 }
 
 
-void AutocallableSimulation::compute(Size nTimeSteps, Size nSamples) {
-	
-	//diffusion: it sets the process of underlying diffusion
-	boost::shared_ptr<StochasticProcess1D> diffusion(new BlackScholesMertonProcess(
-		Handle<Quote>(underlying_),
-		Handle<YieldTermStructure>(qTermStructure_),
-		Handle<YieldTermStructure>(OISTermStructure_),
-		Handle<BlackVolTermStructure>(volatility_))
-	);
-	//generator: it generates the pseudo-random numbers
-	PseudoRandom::rsg_type rsg = PseudoRandom::make_sequence_generator(nTimeSteps, 0);
-	bool brownianBridge = false;
-	typedef SingleVariate<PseudoRandom>::path_generator_type generator_type;
-	boost::shared_ptr<generator_type> myPathGenerator(new
-		generator_type(diffusion, maturity_, nTimeSteps,
-			rsg, brownianBridge));
+void AutocallableSimulation::compute(Size nTimeSteps, Size nSamples, char modelType) {
 
-	boost::shared_ptr<PathPricer<Path>> myPathPricer(
-		new AutocallablePathPricer(bondTermStructure_,
+	Real Price;
+
+	if (modelType == 'B') {
+
+		//B&S model
+
+		std::cout << "\nCalcolo del prezzo dell'Express Certificate con il modello di Black&Scholes...\n" << std::endl;
+		//diffusion: it sets the process of underlying diffusion
+		boost::shared_ptr<StochasticProcess> BSdiffusion(new BlackScholesMertonProcess(
+			Handle<Quote>(underlying_),
+			Handle<YieldTermStructure>(qTermStructure_),
+			Handle<YieldTermStructure>(OISTermStructure_),
+			Handle<BlackVolTermStructure>(volatility_)));
+		//generator: it generates the pseudo-random numbers	
+		PseudoRandom::rsg_type rsg = PseudoRandom::make_sequence_generator(nTimeSteps, 0);
+		typedef MultiVariate<PseudoRandom>::path_generator_type generator_type;
+		boost::shared_ptr<generator_type> BSPathGenerator(new
+			generator_type(BSdiffusion, TimeGrid(maturity_,nTimeSteps),//maturity_, nTimeSteps,
+				rsg, false));
+
+		/*std::shared_ptr<PathPricer<Path>> foo;
+		std::shared_ptr<PathPricer<MultiPath>> bar;
+		foo = std::dynamic_pointer_cast<PathPricer<Path>>(bar);*/
+
+		boost::shared_ptr<PathPricer<MultiPath>> BSPathPricer(
+			new AutocallablePathPricer(bondTermStructure_,
+				OISTermStructure_,
+				maturity_,
+				strike_,
+				settlementDate_));
+		//boost::shared_ptr<PathPricer<Path>> BSPathPricer = boost::dynamic_pointer_cast<PathPricer<Path>>(MyPathPricer);
+
+		// staticsticAccumulator: it is necessary to calculate the average over the path-prices
+		Statistics statisticsAccumulator;
+
+		// The Monte Carlo model generates paths using myPathGenerator
+		// each path is priced using myPathPricer
+		// prices will be accumulated into statisticsAccumulator
+
+		MonteCarloModel<MultiVariate, PseudoRandom>
+			BS_MCSimulation(BSPathGenerator,
+				BSPathPricer,
+				statisticsAccumulator,
+				false);
+		// the model simulates nSamples paths
+		BS_MCSimulation.addSamples(nSamples);
+
+		// the sampleAccumulator method
+		// gives access to all the methods of statisticsAccumulator
+		Price = BS_MCSimulation.sampleAccumulator().mean();
+	}
+	else if (modelType == 'H') {
+
+		//Heston model
+
+		std::cout << "\nCalcolo del prezzo dell'Express Certificate con il modello di Heston...\n" << std::endl;
+
+		//Heston parameters
+		Real v0 = 0.0292;
+		Real kappa = 1.13;
+		Real theta = 0.191;
+		Real sigma = 0.74355254;
+		Real rho = -0.58486121;
+
+		//diffusion: it sets the process of underlying diffusion
+		boost::shared_ptr<StochasticProcess> Hdiffusion(new HestonProcess(
+			Handle<YieldTermStructure>(OISTermStructure_),
+			Handle<YieldTermStructure>(qTermStructure_),
+			Handle<Quote>(underlying_),
+			v0, kappa, theta, sigma, rho));
+
+		//generator: it generates the pseudo-random numbers			
+		PseudoRandom::rsg_type rsg = PseudoRandom::make_sequence_generator(Hdiffusion->factors() * nTimeSteps, 0);
+
+		//multipath_generator: it generates the multi-path for the Heston process
+		typedef MultiVariate<PseudoRandom>::path_generator_type generator_type;
+		boost::shared_ptr<generator_type> HPathGenerator(new generator_type(Hdiffusion, TimeGrid(maturity_, nTimeSteps), rsg, false));
+		boost::shared_ptr<PathPricer<MultiPath>> HPathPricer(new AutocallablePathPricer(bondTermStructure_,
 			OISTermStructure_,
-			maturity_, 
+			maturity_,
 			strike_,
 			settlementDate_));
+			
+		// staticsticAccumulator: it is necessary to calculate the average over the path-prices
+		Statistics statisticsAccumulator;
 
-	// staticsticAccumulator: it is necessary to calculate the average over the path-prices
-	Statistics statisticsAccumulator;
+		// The Monte Carlo model generates paths using myPathGenerator
+		// each path is priced using myPathPricer
+		// prices will be accumulated into statisticsAccumulator
 
-	// The Monte Carlo model generates paths using myPathGenerator
-	// each path is priced using myPathPricer
-	// prices will be accumulated into statisticsAccumulator
+		MonteCarloModel<MultiVariate, PseudoRandom>
+		Heston_MCSimulation(HPathGenerator,
+				HPathPricer,
+				statisticsAccumulator,
+				false);
 
-	MonteCarloModel<SingleVariate, PseudoRandom>
-		MCSimulation(myPathGenerator,
-			myPathPricer,
-			statisticsAccumulator,
-			false);
+		// the model simulates nSamples paths
+		Heston_MCSimulation.addSamples(nSamples);
+		
+		// the sampleAccumulator method
+		// gives access to all the methods of statisticsAccumulator
+		Price = Heston_MCSimulation.sampleAccumulator().mean();
+				
+				/*std::vector<Real> Prices;
+				for (Size i = 0; i < nSamples; i++) {
+				Sample <MultiPath> sample = HPathGenerator->next();
+				const MultiPath& paths = sample.value;
+				const Path& stock = paths[0];
+				const Path& vols = paths[1];
+				Prices.push_back(priceCalculator(stock, settlementDate_, strike_, bondTermStructure_, maturity_, OISTermStructure_));
+				Price += Prices.at(i);
+				}
+				Price = Price / nSamples;*/
+	}
 
-	// the model simulates nSamples paths
-	MCSimulation.addSamples(nSamples);
-
-	// the sampleAccumulator method
-	// gives access to all the methods of statisticsAccumulator
-	Real Price = MCSimulation.sampleAccumulator().mean();
 	std::cout << " \nPrice = " << Price << std::endl;
 }
+
+	

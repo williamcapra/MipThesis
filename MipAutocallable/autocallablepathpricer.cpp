@@ -14,29 +14,23 @@ AutocallablePathPricer::AutocallablePathPricer(boost::shared_ptr<YieldTermStruct
 	QL_REQUIRE(strike_ > 0.0, "strike must be positive");
 }
 
+Real AutocallablePathPricer::operator()(const MultiPath& paths) const {
 
-Real AutocallablePathPricer::operator()(const Path& path) const {
+	const Path& path = paths[0];
+	//const Path& vol = paths[1];
 
 	Calendar calendar = TARGET();
-	DayCounter dayCount = Actual365Fixed();
+	DayCounter dayCount = ActualActual();
 
 	//evaluation times
-	Time firstevaluation1 = dayCount.yearFraction(settlementDate_, Date(21, February, 2018));
-	Time firstevaluation2 = dayCount.yearFraction(settlementDate_, Date(22, February, 2018));
-	Time firstevaluation3 = dayCount.yearFraction(settlementDate_, Date(23, February, 2018));
-	Time firstevaluation4 = dayCount.yearFraction(settlementDate_, Date(26, February, 2018));
-	Time firstevaluation5 = dayCount.yearFraction(settlementDate_, Date(27, February, 2018));
-	Time secondevaluation1 = dayCount.yearFraction(settlementDate_, Date(20, February, 2019));
-	Time secondevaluation2 = dayCount.yearFraction(settlementDate_, Date(21, February, 2019));
-	Time secondevaluation3 = dayCount.yearFraction(settlementDate_, Date(22, February, 2019));
-	Time secondevaluation4 = dayCount.yearFraction(settlementDate_, Date(25, February, 2019));
-	Time secondevaluation5 = dayCount.yearFraction(settlementDate_, Date(26, February, 2019));
-	Time thirdevaluation1 = dayCount.yearFraction(settlementDate_, Date(20, February, 2020));
-	Time thirdevaluation2 = dayCount.yearFraction(settlementDate_, Date(21, February, 2020));
-	Time thirdevaluation3 = dayCount.yearFraction(settlementDate_, Date(24, February, 2020));
-	Time thirdevaluation4 = dayCount.yearFraction(settlementDate_, Date(25, February, 2020));
-	Time thirdevaluation5 = dayCount.yearFraction(settlementDate_, Date(26, February, 2020));
-	Time barrierevaluation = dayCount.yearFraction(settlementDate_, Date(01, March, 2021));
+	Time first_evaluationStart = dayCount.yearFraction(settlementDate_, Date(21, February, 2018));
+	Time first_evaluationEnd = dayCount.yearFraction(settlementDate_, Date(27, February, 2018));
+	Time second_evaluationStart = dayCount.yearFraction(settlementDate_, Date(20, February, 2019));
+	Time second_evaluationEnd = dayCount.yearFraction(settlementDate_, Date(26, February, 2019));
+	Time third_evaluationStart = dayCount.yearFraction(settlementDate_, Date(20, February, 2020));
+	Time third_evaluationEnd = dayCount.yearFraction(settlementDate_, Date(26, February, 2020));
+	Time barrier_evaluation = dayCount.yearFraction(settlementDate_, Date(01, March, 2021));
+	Time time_tolerance = 0.00001;
 
 	//autocallable and barrier levels
 	Real startinglevel = strike_;
@@ -50,6 +44,7 @@ Real AutocallablePathPricer::operator()(const Path& path) const {
 	Real secondplus = 58 * 1;
 	Real thirdplus = 58 * 2;
 	Real barrierplus = 58 * 3;
+	Real multiplo = 66.2954 / 100;
 
 	//payment dates
 	Date firstpaymentdate(05, March, 2018);
@@ -59,40 +54,48 @@ Real AutocallablePathPricer::operator()(const Path& path) const {
 	//bond settings
 	Real faceAmount = 1000.0;
 	boost::shared_ptr<PricingEngine> bondEngine(new DiscountingBondEngine(Handle<YieldTermStructure>(bondTermStructure_)));
-	ZeroCouponBond firstZeroCouponBond(2, calendar,	faceAmount,	firstpaymentdate, Following, Real(100.0), settlementDate_);
+	ZeroCouponBond firstZeroCouponBond(2, calendar, faceAmount, firstpaymentdate, Following, Real(100.0), settlementDate_);
 	firstZeroCouponBond.setPricingEngine(bondEngine);
 	ZeroCouponBond secondZeroCouponBond(2, calendar, faceAmount, secondpaymentdate, Following, Real(100.0), settlementDate_);
 	secondZeroCouponBond.setPricingEngine(bondEngine);
 	ZeroCouponBond thirdZeroCouponBond(2, calendar, faceAmount, thirdpaymentdate, Following, Real(100.0), settlementDate_);
 	thirdZeroCouponBond.setPricingEngine(bondEngine);
 	ZeroCouponBond barrierZeroCouponBond(2, calendar, faceAmount, Date(03, March, 2021), Following, Real(100.0), settlementDate_);
-	thirdZeroCouponBond.setPricingEngine(bondEngine);
-	
-	//MC initialization
-	Real price = 0.00;
+	barrierZeroCouponBond.setPricingEngine(bondEngine);
 
-	if (path.value(firstevaluation1) >= firstlevel || path.value(firstevaluation2) >= firstlevel || path.value(firstevaluation3) >= firstlevel
-		|| path.value(firstevaluation4) >= firstlevel || path.value(firstevaluation5) >= firstlevel) 
-	{
-		price = firstZeroCouponBond.NPV() + firstplus * OISTermStructure_->discount(firstpaymentdate);
+	//Pricing algorithm
+	Size n = path.length() - 1;
+	QL_REQUIRE(n > 0, "the path cannot be empty");
+	Time dt = maturity_ / n;
+	Time t = 0;
+	Real stock = path.front();
+	
+	for (Size step = 0; step < n - 1; step ++) {
+		t += dt;
+		stock = path[step+1];
+		if (t > (first_evaluationStart - time_tolerance) && t < (first_evaluationEnd + time_tolerance)) {
+			if (stock >= firstlevel) {
+				return (firstZeroCouponBond.NPV() + firstplus * OISTermStructure_->discount(firstpaymentdate));				
+			}		
+		}
+		if (t > (second_evaluationStart - time_tolerance) && t < (second_evaluationEnd + time_tolerance)) {
+			if (stock >= secondlevel) {
+				return (secondZeroCouponBond.NPV() + secondplus * OISTermStructure_->discount(secondpaymentdate));
+			}
+		}
+		if (t > (third_evaluationStart - time_tolerance) && t < (third_evaluationEnd + time_tolerance)) {
+			if (stock >= thirdlevel) {
+				return (thirdZeroCouponBond.NPV() + thirdplus * OISTermStructure_->discount(thirdpaymentdate));
+			}
+		}
+		if ( t > (barrier_evaluation - time_tolerance) && t < (barrier_evaluation + time_tolerance)) {
+			if (stock > barrierlevel) {
+				return (barrierZeroCouponBond.NPV() + barrierplus * OISTermStructure_->discount(maturity_));
+			}
+			else {
+				Real performance = (1 - stock / startinglevel) * multiplo;
+				return (barrierZeroCouponBond.NPV() * (1 - performance));
+			}
+		}
 	}
-	else if (path.value(secondevaluation1) >= secondlevel || path.value(secondevaluation2) >= secondlevel || path.value(secondevaluation3) >= secondlevel
-		|| path.value(secondevaluation4) >= secondlevel || path.value(secondevaluation5) >= secondlevel)
-	{
-		price = secondZeroCouponBond.NPV() + secondplus * OISTermStructure_->discount(secondpaymentdate);
-	}
-	else if (path.value(thirdevaluation1) >= thirdlevel || path.value(thirdevaluation2) >= thirdlevel || path.value(thirdevaluation3) >= thirdlevel
-		|| path.value(thirdevaluation4) >= thirdlevel || path.value(thirdevaluation5) >= thirdlevel)
-	{
-		price = thirdZeroCouponBond.NPV() + thirdplus * OISTermStructure_->discount(thirdpaymentdate);
-	}
-	else if (path.value(barrierevaluation) >= barrierlevel) 
-	{
-		price = barrierZeroCouponBond.NPV() + barrierplus * OISTermStructure_->discount(maturity_);
-	}
-	else {
-		price = barrierZeroCouponBond.NPV() - (path.value(barrierevaluation) / startinglevel -1)* OISTermStructure_->discount(maturity_);
-	}
-		
-	return price;
 }

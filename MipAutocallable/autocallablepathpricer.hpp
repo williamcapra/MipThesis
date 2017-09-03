@@ -9,7 +9,7 @@ using namespace QuantLib;
 // The key for the MonteCarlo simulation is to have a PathPricer that
 // implements a value(const Path& path) method.
 
-class AutocallablePathPricer : public PathPricer<Path> {
+class AutocallablePathPricer : public PathPricer<MultiPath> {
 public:
 	// real constructor
 	AutocallablePathPricer(boost::shared_ptr<YieldTermStructure> bondTermStructure,
@@ -19,8 +19,8 @@ public:
 		Date settlementDate);
 
 	// The value() method encapsulates the pricing code
-	Real operator()(const Path& path) const;
-
+	Real operator()(const MultiPath& paths) const;
+	
 private:
 	boost::shared_ptr<YieldTermStructure> bondTermStructure_;
 	boost::shared_ptr<YieldTermStructure> OISTermStructure_;
@@ -29,5 +29,4 @@ private:
 	Date settlementDate_;
 };
 
-
-#endif // !autocallable_path_pricer_h
+#endif 

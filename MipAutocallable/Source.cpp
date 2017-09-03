@@ -46,13 +46,38 @@ int main(int, char*[]) {
 
 		//bond discounting curve
 		auto bondTermStructure = MarketData::buildbonddiscountingurve(settlementDate, fixingDays);
-
+		
 		//Price calculation via Montecarlo simulation
 		AutocallableSimulation autocall(underlying, qTermStructure, bondTermStructure, OISTermStructure, volatility, maturity, strike, settlementDate);
-		Size nTimeSteps = 1000;
-		Size nSamples = 50000; 
-		autocall.compute(nTimeSteps, nSamples);
+		Size nTimeSteps = 10000;
+		Size nSamples = 5000;
+
+		/*std::cout << "\nt1_s =" << dayCount.yearFraction(settlementDate, Date(21, February, 2018)) << std::endl;
+		std::cout << " t1_e = " << dayCount.yearFraction(settlementDate, Date(27, February, 2018)) << std::endl;
+		std::cout << "\nt2_s = "<< dayCount.yearFraction(settlementDate, Date(20, February, 2019)) << std::endl;
+		std::cout << " t2_e = "<< dayCount.yearFraction(settlementDate, Date(26, February, 2019)) << std::endl;
+		std::cout << "\nt3_s = "<< dayCount.yearFraction(settlementDate, Date(20, February, 2020)) << std::endl;
+		std::cout << " t3_e = "<< dayCount.yearFraction(settlementDate, Date(26, February, 2020)) << std::endl;
+		std::cout << "\nbar = "<< dayCount.yearFraction(settlementDate, Date(01, March, 2021)) << std::endl;*/
+
+		//model choise
+		char modelType;
+		bool fails = false;
+		do {
+			std::cout << "Digita la scelta del modello con cui prezzare:\n\n";
+			std::cout << "   -) B per Black&Scholes;\n";
+			std::cout << "   -) H per Heston.\n\n";
+			std::cin >> modelType;
+			modelType = toupper(modelType);
+			if ((modelType == 'B') || (modelType == 'H')){
+				autocall.compute(nTimeSteps, nSamples, modelType);
+			}
+			else
+			{	fails = true;
+				std::cout << "\nNon è stato inserito un dato valido!\nSi prega di riprovare\n" << std::endl;}
+		} while (fails);		
 		
+		//timer
 		double seconds = timer.elapsed();
 		Integer hours = int(seconds / 3600);
 		seconds -= hours * 3600;
