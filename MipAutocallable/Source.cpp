@@ -49,16 +49,8 @@ int main(int, char*[]) {
 		
 		//Price calculation via Montecarlo simulation
 		AutocallableSimulation autocall(underlying, qTermStructure, bondTermStructure, OISTermStructure, volatility, maturity, strike, settlementDate);
-		Size nTimeSteps = 10000;
-		Size nSamples = 5000;
-
-		/*std::cout << "\nt1_s =" << dayCount.yearFraction(settlementDate, Date(21, February, 2018)) << std::endl;
-		std::cout << " t1_e = " << dayCount.yearFraction(settlementDate, Date(27, February, 2018)) << std::endl;
-		std::cout << "\nt2_s = "<< dayCount.yearFraction(settlementDate, Date(20, February, 2019)) << std::endl;
-		std::cout << " t2_e = "<< dayCount.yearFraction(settlementDate, Date(26, February, 2019)) << std::endl;
-		std::cout << "\nt3_s = "<< dayCount.yearFraction(settlementDate, Date(20, February, 2020)) << std::endl;
-		std::cout << " t3_e = "<< dayCount.yearFraction(settlementDate, Date(26, February, 2020)) << std::endl;
-		std::cout << "\nbar = "<< dayCount.yearFraction(settlementDate, Date(01, March, 2021)) << std::endl;*/
+		Size nTimeSteps = 1000;
+		Size nSamples = 50000;
 
 		//model choise
 		char modelType;
@@ -74,7 +66,7 @@ int main(int, char*[]) {
 			}
 			else
 			{	fails = true;
-				std::cout << "\nNon è stato inserito un dato valido!\nSi prega di riprovare\n" << std::endl;}
+				std::cout << "\nCarattere inserito non valido...Si prega di riprovare!\n" << std::endl;}
 		} while (fails);		
 		
 		//timer
