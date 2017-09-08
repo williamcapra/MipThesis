@@ -36,4 +36,13 @@ private:
 	Date settlementDate_;
 };
 
+struct Repayment {
+	Real faceAmount;
+	Real coupon;
+	Real value;
+	std::vector<Date> evaluationDates;
+	Real exerciseLevel;
+	Date paymentDate;
+};
+
 #endif

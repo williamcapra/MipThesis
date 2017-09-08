@@ -528,7 +528,7 @@ boost::shared_ptr<YieldTermStructure> MarketData::builddividendcurve(Date settle
 
 	Real forward[] = { 15.35, 15.30, 15.30, 15.30, 15.30, 15.30, 14.90, 14.90, 14.90, 14.89, 14.89, 14.89, 14.88, 14.88, 14.53, 14.53, 14.53, 14.53, 14.21, 14.21,
 		13.89, 13.89, 13.58, 13.58, 13.29, 13.29, 12.74, 12.24, 12.25, 11.80 };
-
+	
 	std::vector<Real> fwd(forward, forward + LENGTH(forward));
 
 	std::vector<Real> qDiscount;

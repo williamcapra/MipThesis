@@ -3,6 +3,7 @@
 #define autocallable_path_pricer_hpp
 
 #include <ql/quantlib.hpp>
+#include <autocallablesimulation.hpp>
 
 using namespace QuantLib;
 
@@ -16,7 +17,8 @@ public:
 		boost::shared_ptr<YieldTermStructure> OISTermStructure,
 		Time maturity,
 		Real strike,
-		Date settlementDate);
+		Date settlementDate, 
+		std::vector<Repayment> repayments);
 
 	// The value() method encapsulates the pricing code
 	Real operator()(const MultiPath& paths) const;
@@ -27,6 +29,7 @@ private:
 	Time maturity_;
 	Real strike_;
 	Date settlementDate_;
+	std::vector<Repayment> repayments_;
 };
 
 #endif 
