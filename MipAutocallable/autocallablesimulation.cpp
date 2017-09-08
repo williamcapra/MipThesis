@@ -4,6 +4,10 @@
 
 using namespace QuantLib;
 
+Real repaymentValue(const Repayment& repayment,
+	boost::shared_ptr<YieldTermStructure> riskFreeTermStructure,
+	boost::shared_ptr<YieldTermStructure> riskyTermStructure);
+
 AutocallableSimulation::AutocallableSimulation(boost::shared_ptr<Quote> underlying,	
 	boost::shared_ptr<YieldTermStructure> qTermStructure,
 	boost::shared_ptr<YieldTermStructure> bondTermStructure,
@@ -19,6 +23,63 @@ AutocallableSimulation::AutocallableSimulation(boost::shared_ptr<Quote> underlyi
 
 void AutocallableSimulation::compute(Size nTimeSteps, Size nSamples, char modelType) {
 
+	Real excerciselevel = 15.08;
+
+	// EarlyRepaiments
+	std::vector<Repayment> repayments;
+	Repayment firstRepaiment = { 1000.00,
+		0.0,
+		0.0,
+		std::vector<Date>{Date(21, February, 2018),
+		Date(22, February, 2018),
+		Date(23, February, 2018),
+		Date(26, February, 2018),
+		Date(27, February, 2018)},
+		excerciselevel,
+		Date(05, March, 2018) };
+	repayments.push_back(firstRepaiment);
+
+	Repayment secondRepaiment = { 1000.00,
+		58.00,
+		0.0,
+		std::vector<Date>{Date(20, February, 2019),
+		Date(21, February, 2019),
+		Date(22, February, 2019),
+		Date(25, February, 2019),
+		Date(26, February, 2019)},
+		excerciselevel,
+		Date(04, March, 2019) };
+	repayments.push_back(secondRepaiment);
+
+	Repayment thirdRepaiment = { 1000.00,
+		116.00,
+		0.0,
+		std::vector<Date>{Date(20, February, 2020),
+		Date(21, February, 2020),
+		Date(24, February, 2020),
+		Date(25, February, 2020),
+		Date(26, February, 2020)},
+		excerciselevel,
+		Date(04, March, 2020) };
+	repayments.push_back(thirdRepaiment);
+
+	Repayment maturityRepaiment = { 1000.00,
+		174.00,
+		0.0,
+		std::vector<Date>{Date(23, February, 2021),
+		Date(24, February, 2021),
+		Date(25, February, 2021),
+		Date(26, February, 2021),
+		Date(01, March, 2021)},
+		excerciselevel,
+		Date(03, March, 2021) };
+	repayments.push_back(maturityRepaiment);
+
+	for (auto& r : repayments) {
+		auto value = repaymentValue(r, OISTermStructure_, bondTermStructure_);
+		r.value = value;
+	}
+	
 	Real Price;
 
 	// The Monte Carlo model generates paths, according to the "diffusion process", 
@@ -56,7 +117,8 @@ void AutocallableSimulation::compute(Size nTimeSteps, Size nSamples, char modelT
 				OISTermStructure_,
 				maturity_,
 				strike_,
-				settlementDate_));
+				settlementDate_,
+				repayments));
 		
 		Statistics statisticsAccumulator;
 		
@@ -97,7 +159,8 @@ void AutocallableSimulation::compute(Size nTimeSteps, Size nSamples, char modelT
 			OISTermStructure_,
 			maturity_,
 			strike_,
-			settlementDate_));
+			settlementDate_,
+			repayments));
 			
 		Statistics statisticsAccumulator;
 
@@ -128,4 +191,15 @@ void AutocallableSimulation::compute(Size nTimeSteps, Size nSamples, char modelT
 	std::cout << " \nErrore = " << abs(1-Price/ 1005.32) * 100 << " % " << std::endl;
 }
 
+
+Real repaymentValue(const Repayment& repayment,
+	boost::shared_ptr<YieldTermStructure> riskFreeTermStructure,
+	boost::shared_ptr<YieldTermStructure> riskyTermStructure) {
+	boost::shared_ptr<PricingEngine> bondEngine(new DiscountingBondEngine(Handle<YieldTermStructure>(riskyTermStructure)));
+	boost::shared_ptr<ZeroCouponBond> zc(new ZeroCouponBond(2, TARGET(), repayment.faceAmount, repayment.paymentDate));
+	zc->setPricingEngine(bondEngine);
+	Real zcValue = zc->NPV();
+	Real couponValue = repayment.coupon * riskFreeTermStructure->discount(repayment.paymentDate);
+	return zcValue + couponValue;
+}
 	
