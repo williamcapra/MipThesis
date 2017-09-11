@@ -224,80 +224,47 @@ boost::shared_ptr<BlackVarianceSurface> MarketData::buildblackvariancesurface(Da
 
 	DayCounter dc = Actual365Fixed();
 
-	//dates
+	//expiry dates
+	Date expiryDates[] = { settlementDate,
+		Date(06, April, 2017),
+		Date(07, April, 2017),
+		Date(13, April, 2017),
+		Date(20, April, 2017),
+		Date(21, April, 2017),
+		Date(27, April, 2017),
+		Date(18, May, 2017),
+		Date(19, May, 2017),
+		Date(15, June, 2017),
+		Date(16, June, 2017),
+		Date(29, June, 2017),
+		Date(14, September, 2017),
+		Date(15, September, 2017),
+		Date(14, December, 2017),		
+		Date(15, December, 2017),		
+		Date(15, March, 2018),		
+		Date(16, March, 2018),		
+		Date(14, June, 2018),		
+		Date(15, June, 2018),		
+		Date(20, December, 2018),		
+		Date(21, December, 2018),		
+		Date(20, June, 2019),		
+		Date(21, June, 2019),		
+		Date(19, December, 2019),
+		Date(20, December, 2019),
+		Date(17, December, 2020),
+		Date(16, December, 2021),
+		Date(31, December, 2021),
+		Date(30, December, 2022) };
 
-	Date expiry0(settlementDate);
-	Date expiry1(06, April, 2017);
-	Date expiry2(07, April, 2017);
-	Date expiry3(13, April, 2017);
-	Date expiry4(20, April, 2017);
-	Date expiry5(21, April, 2017);
-	Date expiry6(27, April, 2017);
-	Date expiry7(18, May, 2017);
-	Date expiry8(19, May, 2017);
-	Date expiry9(15, June, 2017);
-	Date expiry10(16, June, 2017);
-	Date expiry11(29, June, 2017);
-	Date expiry12(14, September, 2017);
-	Date expiry13(15, September, 2017);
-	Date expiry14(14, December, 2017);
-	Date expiry15(15, December, 2017);
-	Date expiry16(15, March, 2018);
-	Date expiry17(16, March, 2018);
-	Date expiry18(14, June, 2018);
-	Date expiry19(15, June, 2018);
-	Date expiry20(20, December, 2018);
-	Date expiry21(21, December, 2018);
-	Date expiry22(20, June, 2019);
-	Date expiry23(21, June, 2019);
-	Date expiry24(19, December, 2019);
-	Date expiry25(20, December, 2019);
-	Date expiry26(17, December, 2020);
-	Date expiry27(16, December, 2021);
-	Date expiry28(31, December, 2021);
-	Date expiry29(30, December, 2022);
-
-	std::vector<Date> dates;
-	dates.push_back(expiry0);
-	dates.push_back(expiry1);
-	dates.push_back(expiry2);
-	dates.push_back(expiry3);
-	dates.push_back(expiry4);
-	dates.push_back(expiry5);
-	dates.push_back(expiry6);
-	dates.push_back(expiry7);
-	dates.push_back(expiry8);
-	dates.push_back(expiry9);
-	dates.push_back(expiry10);
-	dates.push_back(expiry11);
-	dates.push_back(expiry12);
-	dates.push_back(expiry13);
-	dates.push_back(expiry14);
-	dates.push_back(expiry15);
-	dates.push_back(expiry16);
-	dates.push_back(expiry17);
-	dates.push_back(expiry18);
-	dates.push_back(expiry19);
-	dates.push_back(expiry20);
-	dates.push_back(expiry21);
-	dates.push_back(expiry22);
-	dates.push_back(expiry23);
-	dates.push_back(expiry24);
-	dates.push_back(expiry25);
-	dates.push_back(expiry26);
-	dates.push_back(expiry27);
-	dates.push_back(expiry28);
-	dates.push_back(expiry29);
-
+	std::vector<Date> dates(expiryDates, expiryDates + LENGTH(expiryDates));
+	
 	//strike prices for the vola-surface
-
 	Real K[] = { 14.00, 14.25, 14.50, 14.75, 15.00, 15.25, 15.50, 15.75, 16.00, 16.25, 16.50, 16.75, 17.00,
 		17.25, 17.50, 17.75, 18.00, 18.50, 19.00, 20.00 };
 
-	std::vector<Real> strikes(K, K + LENGTH(K)); //è un oggetto
+	std::vector<Real> strikes(K, K + LENGTH(K));
 
 	//volatility surface construction
-
 	Volatility v[] =
 	{ 0.23840, 0.21910, 0.19870, 0.17790, 0.15990, 0.14340, 0.13260, 0.13320, 0.13700, 0.14240, 0.15140, 0.16200, 0.17150, 0.17950, 0.18600, 0.19150, 0.19610, 0.20340, 0.20920, 0.21660,
 		0.23610, 0.21720, 0.19710, 0.17690, 0.15940, 0.14330, 0.13270, 0.13310, 0.13670, 0.14170, 0.15010, 0.16040, 0.16990, 0.17800, 0.18460, 0.19010, 0.19490, 0.20240, 0.20820, 0.21570,

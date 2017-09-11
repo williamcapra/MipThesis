@@ -49,7 +49,7 @@ int main(int, char*[]) {
 		
 		//Price calculation via Montecarlo simulation
 		AutocallableSimulation autocall(underlying, qTermStructure, bondTermStructure, OISTermStructure, volatility, maturity, strike, settlementDate);
-		Size nTimeSteps = 1000;
+		Size nTimeSteps = 1500;
 		Size nSamples = 50000;
 
 		//model choise
@@ -63,10 +63,12 @@ int main(int, char*[]) {
 			modelType = toupper(modelType);
 			if ((modelType == 'B') || (modelType == 'H')){
 				autocall.compute(nTimeSteps, nSamples, modelType);
+				fails = false;
 			}
-			else
-			{	fails = true;
-				std::cout << "\nCarattere inserito non valido...Si prega di riprovare!\n" << std::endl;}
+			else {	
+				std::cout << "\nCarattere inserito non valido...Si prega di riprovare!\n" << std::endl;
+				fails = true;
+			}
 		} while (fails);		
 		
 		//timer
