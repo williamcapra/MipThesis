@@ -42,6 +42,7 @@ int main(int, char*[]) {
 		auto qTermStructure = MarketData::builddividendcurve(settlementDate, fixingDays, OISTermStructure);
 		auto varTS = MarketData::buildblackvariancesurface(settlementDate, calendar);
 		Volatility sigma = varTS->blackVol(optionExpiryDate, strike);
+		sigma = 0.18;
 		const boost::shared_ptr<BlackVolTermStructure> volatility(new BlackConstantVol(settlementDate, calendar, sigma, dayCount));
 
 		//bond discounting curve

@@ -157,7 +157,7 @@ boost::shared_ptr<StochasticProcess> choseDiffusion(char modelType,
 	Real sigma = 0.74355254;
 	Real rho = -0.58486121;
 	Real epsilon = 0.718598576122673;
-	kappa *= (epsilon*epsilon);
+	theta *= (epsilon*epsilon);
 	sigma *= epsilon;
 
 	boost::shared_ptr<StochasticProcess> Hdiffusion(new HestonProcess(
@@ -176,10 +176,6 @@ boost::shared_ptr<StochasticProcess> choseDiffusion(char modelType,
 	case('H'):
 		std::cout << "\nCalcolo del prezzo con il modello di Heston...\n" << std::endl;		
 		return Hdiffusion;
-		break;
-
-	default:
-		std::cout << "FATAL ERROR" << std::endl;
 		break;
 	}
 }

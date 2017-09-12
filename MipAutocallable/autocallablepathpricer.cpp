@@ -71,8 +71,8 @@ Repayment occurredRepayment(const std::vector<Repayment>& repayments,
 		if (average >= r.exerciseLevel){
 			return r;
 		}
-		return repayments.back();
 	}
+	return repayments.back();
 }
 	
 Real stockValue(const Path& path, const Date& date,
